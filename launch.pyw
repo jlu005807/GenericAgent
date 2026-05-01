@@ -130,15 +130,34 @@ if __name__ == '__main__':
         print('[Launch] Task Scheduler started (duplicate prevented by scheduler port lock)')
     else: print('[Launch] Task Scheduler not enabled (--sched)')
 
-    monitor_thread = threading.Thread(target=idle_monitor, daemon=True)
-    monitor_thread.start()
-    if os.name == 'nt':
-        screen_width = get_screen_width()
-        x_pos = screen_width - WINDOW_WIDTH - RIGHT_PADDING
-    else: x_pos = 100
-    time.sleep(2) 
-    window = webview.create_window(
-        title='GenericAgent', url=f'http://localhost:{port}',
-        width=WINDOW_WIDTH, height=WINDOW_HEIGHT, x=x_pos, y=TOP_PADDING,
-        resizable=True, text_select=True)
-    webview.start()
+    def is_wsl():
+        try: return 'microsoft' in os.uname().release.lower()
+        except: return False
+
+    if is_wsl():
+        # WSL模式：不启动pywebview，用Windows浏览器打开
+        time.sleep(2)
+        url = f'http://localhost:{port}'
+        print(f'[Launch] WSL detected, opening in Windows browser: {url}')
+        # WSL: open URL in Windows browser via cmd.exe
+        cmd_path = '/mnt/c/Windows/System32/cmd.exe'
+        subprocess.Popen([cmd_path, '/c', 'start', url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # idle_monitor需要window对象，WSL下跳过
+        print('[Launch] Press Ctrl+C to stop')
+        try:
+            while True: time.sleep(1)
+        except KeyboardInterrupt:
+            print('\n[Launch] Shutting down...')
+    else:
+        monitor_thread = threading.Thread(target=idle_monitor, daemon=True)
+        monitor_thread.start()
+        if os.name == 'nt':
+            screen_width = get_screen_width()
+            x_pos = screen_width - WINDOW_WIDTH - RIGHT_PADDING
+        else: x_pos = 100
+        time.sleep(2)
+        window = webview.create_window(
+            title='GenericAgent', url=f'http://localhost:{port}',
+            width=WINDOW_WIDTH, height=WINDOW_HEIGHT, x=x_pos, y=TOP_PADDING,
+            resizable=True, text_select=True)
+        webview.start()
