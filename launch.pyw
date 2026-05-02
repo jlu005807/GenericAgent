@@ -135,14 +135,11 @@ if __name__ == '__main__':
         except: return False
 
     if is_wsl():
-        # WSL模式：不启动pywebview，用Windows浏览器打开
         time.sleep(2)
         url = f'http://localhost:{port}'
         print(f'[Launch] WSL detected, opening in Windows browser: {url}')
-        # WSL: open URL in Windows browser via cmd.exe
-        cmd_path = '/mnt/c/Windows/System32/cmd.exe'
-        subprocess.Popen([cmd_path, '/c', 'start', url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # idle_monitor需要window对象，WSL下跳过
+        subprocess.Popen(['/mnt/c/Windows/System32/cmd.exe', '/c', 'start', url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # no pywebview in WSL, just keep alive
         print('[Launch] Press Ctrl+C to stop')
         try:
             while True: time.sleep(1)
